@@ -1,23 +1,5 @@
 import EmployeeList from "../components/employees/EmployeeList";
-
-const DUMMY_MEETUPS = [
-  {
-    id: "e1",
-    title: "A First Employee",
-    image:
-      "https://cdn.pixabay.com/photo/2021/02/03/00/10/receptionists-5975962_960_720.jpg",
-    address: "Some address 5, 12345 Some City",
-    description: "This is a first meetup!",
-  },
-  {
-    id: "e2",
-    title: "A Second Employee",
-    image:
-      "https://cdn.pixabay.com/photo/2021/02/03/00/10/receptionists-5975962_960_720.jpg",
-    address: "Some address 10, 12345 Some City",
-    description: "This is a second meetup!",
-  },
-];
+import { MongoClient } from "mongodb";
 
 function HomePage(props) {
   return <EmployeeList employees={props.employees} />;
@@ -36,11 +18,25 @@ function HomePage(props) {
 // }
 export async function getStaticProps() {
   // fetch data from an API
+  const client = await MongoClient.connect(
+    "mongodb://localhost:27018/employees-db"
+  );
+  const db = client.db();
+  const employeesCollection = db.collection("employees");
+
+  const employees = await employeesCollection.find().toArray();
+
+  client.close();
   return {
     props: {
-      employees: DUMMY_MEETUPS,
+      employees: employees.map((emp) => ({
+        title: emp.title,
+        address: emp.address,
+        image: emp.image,
+        id: emp._id.toString(),
+      })),
     },
-    revalidate: 1
+    revalidate: 1,
   };
 }
 export default HomePage;
