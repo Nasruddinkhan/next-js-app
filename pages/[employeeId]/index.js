@@ -1,53 +1,65 @@
-import { useRouter } from "next/router";
 import EmployeeDetail from "../../components/employees/EmployeeDetail";
+import { MongoClient, ObjectId } from "mongodb";
 
-function EmployeeDetails() {
-  const router = useRouter();
+function EmployeeDetails(props) {
+  // const router = useRouter();
   //let value = router.query.employeeId;
     return (
       <EmployeeDetail
-        image="https://images.unsplash.com/photo-1579256945823-f007794790df?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80"
-        title="First Meetup"
-        address="Some Street 5, Some City"
-        description="This is a first meetup"
+        image={props.meetupData.image}
+        title={props.meetupData.title}
+        address={props.meetupData.address}
+        description={props.meetupData.description}
       />
     );
 }
-export async function getStaticPaths(){
-    return {
-    fallback: false,
-      paths: [
-        {
-          params: {
-            employeeId: "e1",
-          },
-        },
-        {
-          params: {
-            employeeId: "e2",
-          },
-        }
-      ],
-    };
+export async function getStaticPaths() {
+  const client = await MongoClient.connect(
+    "mongodb://localhost:27018/employees-db"
+  );
+  const db = client.db();
 
+  const employeesCollection = db.collection("employees");
+
+  const employees = await employeesCollection.find({}, { _id: 1 }).toArray();
+  console.log(employees);
+  client.close();
+
+  return {
+    fallback: false,
+    paths: employees.map((emp) => ({
+      params: { employeeId: emp._id.toString() },
+    })),
+  };
 }
 export async function getStaticProps(context) {
-  // fetch data from an API
+  // fetch data for a single meetup
+
   const employeeId = context.params.employeeId;
-  console.log(  employeeId);
+  console.log("employeeId", employeeId);
+  const client = await MongoClient.connect(
+    "mongodb://localhost:27018/employees-db"
+  );
+  const db = client.db();
+
+  const employeesCollection = db.collection("employees");
+
+  const selectedMeetup = await employeesCollection.findOne({
+    _id: ObjectId(employeeId),
+  });
+
+  client.close();
+
   return {
     props: {
-      employeeData: {
-        id: employeeId,
-        image:
-          "https://images.unsplash.com/photo-1579256945823-f007794790df?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80",
-        title: "First Meetup",
-        address: "Some Street 5, Some City",
-        description: "This is a first meetup",
+      meetupData: {
+        id: selectedMeetup._id.toString(),
+        title: selectedMeetup.title,
+        address: selectedMeetup.address,
+        image: selectedMeetup.image,
+        description: selectedMeetup.description,
       },
     },
   };
 }
 export default EmployeeDetails;
-
-
