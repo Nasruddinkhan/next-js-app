@@ -1,16 +1,24 @@
 import EmployeeDetail from "../../components/employees/EmployeeDetail";
 import { MongoClient, ObjectId } from "mongodb";
+import { Fragment } from "react";
+import Head from "next/head";
 
 function EmployeeDetails(props) {
   // const router = useRouter();
   //let value = router.query.employeeId;
     return (
-      <EmployeeDetail
-        image={props.meetupData.image}
-        title={props.meetupData.title}
-        address={props.meetupData.address}
-        description={props.meetupData.description}
-      />
+      <Fragment>
+        <Head>
+          <title>{props.empData.title}</title>
+          <meta name="description" content={props.empData.description} />
+        </Head>
+        <EmployeeDetail
+          image={props.empData.image}
+          title={props.empData.title}
+          address={props.empData.address}
+          description={props.empData.description}
+        />
+      </Fragment>
     );
 }
 export async function getStaticPaths() {
@@ -52,7 +60,7 @@ export async function getStaticProps(context) {
 
   return {
     props: {
-      meetupData: {
+      empData: {
         id: selectedMeetup._id.toString(),
         title: selectedMeetup.title,
         address: selectedMeetup.address,
